@@ -1,0 +1,9 @@
+﻿version: "3.8"
+
+services:
+  sapi:
+    build: .
+    ports:
+      - "3000:80"
+    volumes:
+      - .:/app
