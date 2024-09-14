@@ -48,24 +48,11 @@ public class WebService
                 options.EnableForHttps = true;
 
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-                    [
-                        // TODO Add MIME types that should be compressed
-                        "text/plain",
-                        "application/json",
-                        "text/css",
-                        "application/javascript"
-                    ]
+                    builder.Configuration.GetSection("Compression:Include").Get<string[]>() ?? []
                 );
 
                 options.ExcludedMimeTypes =
-                [
-                    "application/zip",
-                    "application/x-rar-compressed",
-                    "application/x-7z-compressed",
-                    "application/x-gzip",
-                    "video/mp4",
-                    "video/x-matroska"
-                ];
+                    builder.Configuration.GetSection("Compression:Exclude").Get<string[]>() ?? [];
             });
 
             var allowedHosts =
@@ -80,22 +67,20 @@ public class WebService
                 {
                     // If allowedHosts is empty or contains "*", allow any origin, otherwise use the specified hosts
                     if (allowedHosts.Contains("*"))
-                    {
                         policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-                    }
                     else
-                    {
                         policy.WithOrigins(allowedHosts).AllowAnyMethod().AllowAnyHeader();
-                    }
                 });
             });
 
             builder.Services.AddRegisterRoutes();
 
-            builder.Services.AddDbContext<MySqliteContext>(options =>
-            {
-                options.UseMySQL("server=127.0.0.1;port=3306;uid=root;pwd=;database=mercury");
-            });
+            string? connectionString = builder.Configuration.GetConnectionString("Mysql");
+            if (connectionString != null)
+                builder.Services.AddDbContext<MySqliteContext>(options => options
+                    .UseMySQL(connectionString));
+            else
+                Logger?.Warn("The connection string is not stablish. Any db Access will fail");
 
 
             // TODO add auth (maybe jwt)
@@ -106,6 +91,10 @@ public class WebService
             {
                 App.UseSwagger();
                 App.UseSwaggerUI();
+            }
+            else
+            {
+                App.UseHttpsRedirection();
             }
 
             // Middlewares
