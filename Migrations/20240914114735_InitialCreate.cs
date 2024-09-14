@@ -5,29 +5,29 @@ using MySql.EntityFrameworkCore.Metadata;
 
 namespace Mercury.Migrations
 {
+    /// <inheritdoc />
     public partial class InitialCreate : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Create the Rol table first
             migrationBuilder.AlterDatabase()
                 .Annotation("MySQL:Charset", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Rol",
+                name: "Roles",
                 columns: table => new
                 {
                     RolID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    RollName = table.Column<string>(type: "longtext", nullable: true)
+                    RollName = table.Column<string>(type: "longtext", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Rol", x => x.RolID);
+                    table.PrimaryKey("PK_Roles", x => x.RolID);
                 })
                 .Annotation("MySQL:Charset", "utf8mb4");
 
-            // Now create the Users table with a foreign key reference to the Rol table
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
@@ -35,38 +35,34 @@ namespace Mercury.Migrations
                     UserID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
                     UserName = table.Column<string>(type: "longtext", nullable: true),
-                    RolID = table.Column<int>(type: "int", nullable: false)  // Foreign key column
+                    RolID = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.UserID);
-
-                    // Define foreign key constraint for RolID
                     table.ForeignKey(
-                        name: "FK_Users_Rol_RolID",
+                        name: "FK_Users_Roles_RolID",
                         column: x => x.RolID,
-                        principalTable: "Rol",
+                        principalTable: "Roles",
                         principalColumn: "RolID",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySQL:Charset", "utf8mb4");
 
-            // Create an index on RolID for performance (optional but recommended)
             migrationBuilder.CreateIndex(
                 name: "IX_Users_RolID",
                 table: "Users",
                 column: "RolID");
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Drop the Users table first because of the foreign key constraint
             migrationBuilder.DropTable(
                 name: "Users");
 
-            // Drop the Rol table
             migrationBuilder.DropTable(
-                name: "Rol");
+                name: "Roles");
         }
     }
 }

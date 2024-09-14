@@ -1,5 +1,6 @@
 
 using Mercury.DB;
+using Microsoft.EntityFrameworkCore;
 
 namespace Mercury.Routes.Dev;
 
@@ -11,10 +12,12 @@ public class DevRoute : IRoute
     {
         app.MapGet($"{MODULE}/connection", (MySqliteContext dbContext) =>
         {
-            var a = dbContext.Users.Where(e => e.UserID == 1).Take(1);
-            foreach (var item in a)
-                Console.WriteLine(item.Rol);
-            return Results.Ok("😎👍");
+            var usersAdmins = dbContext.Users
+                .Include(m => m.Rol)
+                .Select(user => new { user.Rol.RolID, user.UserName })
+                .Where(user => user.RolID == 2)
+                .ToList();
+            return Results.Ok(usersAdmins);
         });
     }
 }

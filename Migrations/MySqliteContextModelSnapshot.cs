@@ -18,10 +18,28 @@ namespace Mercury.Migrations
                 .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("Mercury.Models.Rol", b =>
+                {
+                    b.Property<int>("RolID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("RollName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("RolID");
+
+                    b.ToTable("Roles");
+                });
+
             modelBuilder.Entity("Mercury.Models.User", b =>
                 {
                     b.Property<int>("UserID")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("RolID")
                         .HasColumnType("int");
 
                     b.Property<string>("UserName")
@@ -29,7 +47,20 @@ namespace Mercury.Migrations
 
                     b.HasKey("UserID");
 
+                    b.HasIndex("RolID");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Mercury.Models.User", b =>
+                {
+                    b.HasOne("Mercury.Models.Rol", "Rol")
+                        .WithMany()
+                        .HasForeignKey("RolID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rol");
                 });
 #pragma warning restore 612, 618
         }
