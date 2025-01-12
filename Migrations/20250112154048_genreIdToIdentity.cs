@@ -1,0 +1,37 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+using MySql.EntityFrameworkCore.Metadata;
+
+#nullable disable
+
+namespace Mercury.Migrations
+{
+    /// <inheritdoc />
+    public partial class genreIdToIdentity : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<int>(
+                name: "Id",
+                table: "Genre",
+                type: "int",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "int")
+                .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<int>(
+                name: "Id",
+                table: "Genre",
+                type: "int",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "int")
+                .OldAnnotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn);
+        }
+    }
+}
