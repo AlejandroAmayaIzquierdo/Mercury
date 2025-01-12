@@ -1,9 +1,20 @@
+using Mercury.Db;
+
 namespace Mercury.Module.Dev;
 
-public class DevService
+public class DevService(MysqlContext dbContext)
 {
-    public static bool TestMysqlConnection()
+    private readonly MysqlContext _dbContext = dbContext;
+
+    public async Task<bool> TestMysqlConnection()
     {
-        return true;
+        try
+        {
+            return await _dbContext.Database.CanConnectAsync();
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

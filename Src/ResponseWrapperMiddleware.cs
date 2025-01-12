@@ -74,7 +74,7 @@ public class ResponseWrapperMiddleware
             context.Response.Body = originalBodyStream;
             var errorResponse = new { error = 1, Detail = errorMessage };
             context.Response.ContentType = "application/json";
-            // WebService.GetLogger()?.Error(JsonConvert.SerializeObject(errorResponse));
+            LogService.Get()?.Error(JsonConvert.SerializeObject(errorResponse.Detail));
             await context.Response.WriteAsync(JsonConvert.SerializeObject(errorResponse));
         }
     }

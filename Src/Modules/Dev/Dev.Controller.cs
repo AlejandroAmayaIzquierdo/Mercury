@@ -1,3 +1,5 @@
+using Mercury.Models.Exceptions;
+
 namespace Mercury.Module.Dev;
 
 public class DevModule : BaseModuleHandler
@@ -16,9 +18,12 @@ public class DevModule : BaseModuleHandler
 
         module.MapGet(
             "/MysqlConnection",
-            () =>
+            async (DevService service) =>
             {
-                return Results.Json(DevService.TestMysqlConnection());
+                bool isConnected = await service.TestMysqlConnection();
+                if (!isConnected)
+                    throw new HttpException("Error while trying to connect to Mysql Db", 408);
+                return true;
             }
         );
     }

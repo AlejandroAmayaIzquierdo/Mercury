@@ -6,6 +6,25 @@ public static class RouteRegister
 {
     public static void AddRegisterRoutes(this IServiceCollection services)
     {
+        // Register services for all modules
+        var routeTypes = Assembly
+            .GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(BaseModuleHandler)));
+
+        foreach (var type in routeTypes)
+        {
+            var serviceName = $"{type.Namespace}.{type.Name.Replace("Module", "Service")}";
+            var serviceType = Assembly
+                .GetExecutingAssembly()
+                .GetTypes()
+                .FirstOrDefault(t => t.FullName == serviceName && t.IsClass && !t.IsAbstract);
+
+            if (serviceType != null)
+                services.AddScoped(serviceType);
+        }
+
+        // Add RouteRegisterService
         services.AddSingleton<RouteRegisterService>();
     }
 

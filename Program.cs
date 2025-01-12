@@ -1,4 +1,6 @@
+using Mercury.Db;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.EntityFrameworkCore;
 using NLog;
 using NLog.Web;
 
@@ -56,15 +58,18 @@ public class Program
             });
         });
 
-        builder.Services.AddRegisterRoutes();
+        string? connectionString = builder.Configuration.GetConnectionString("Mysql");
+        if (connectionString != null)
+            builder.Services.AddDbContext<MysqlContext>(
+                options => options.UseMySQL(connectionString),
+                ServiceLifetime.Scoped
+            );
+        else
+            LogService
+                .Get()
+                ?.Error("The connection string is not stablish. Any db Access will fail");
 
-        // string? connectionString = builder.Configuration.GetConnectionString("Mysql");
-        // if (connectionString != null)
-        //     builder.Services.AddDbContext<UserDBContext>(options =>
-        //         options.UseMySQL(connectionString)
-        //     );
-        // else
-        //     Logger?.Warn("The connection string is not stablish. Any db Access will fail");
+        builder.Services.AddRegisterRoutes();
 
         var app = builder.Build();
 
