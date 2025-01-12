@@ -9,6 +9,6 @@ public class Movie
 
     public required string Title { get; set; }
 
-    public required int GenreId { get; set; }
+    public int? GenreId { get; set; }
     public Genre? Genre { get; set; }
 }
