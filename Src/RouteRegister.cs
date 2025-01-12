@@ -22,24 +22,31 @@ public class RouteRegisterService(IConfiguration configuration)
 
     public void RegisterRoutes(WebApplication app)
     {
-        var excludeRoutes = _configuration.GetSection("Routes:ExcludeRoute").Get<string[]>();
-
-        // FIXME
-        // var clientExpose = _configuration.GetValue<string>("Routes:ClientExpose");
+        var excludeModules = _configuration.GetSection("Routes:ExcludeModules").Get<string[]>();
 
         var routeTypes = Assembly
             .GetExecutingAssembly()
             .GetTypes()
-            .Where(t => t.IsClass && t.Namespace != null && t.Namespace.Contains("Routes"));
+            .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(BaseModuleHandler)));
 
         foreach (var type in routeTypes)
         {
-            // Skip excluded routes
-            if (excludeRoutes != null && excludeRoutes.Contains(type.Namespace))
-                continue;
+            // Skip excluded routes based on the MODULE property
+            var moduleField = type.GetProperty(
+                "MODULE",
+                BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public
+            );
+            if (excludeModules != null && moduleField != null)
+            {
+                var instance = Activator.CreateInstance(type);
+                var moduleValue = moduleField.GetValue(instance)?.ToString();
 
+                if (excludeModules.Contains(moduleValue))
+                    continue;
+            }
 
-            var registerMethod = type.GetMethod("Register");
+            // Find the Register method
+            var registerMethod = type.GetMethod("Invoke");
             if (registerMethod != null)
             {
                 var instance = Activator.CreateInstance(type);

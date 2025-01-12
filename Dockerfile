@@ -21,4 +21,4 @@ COPY --from=build /app/out ./
 EXPOSE 80
 
 # Start the application
-ENTRYPOINT ["dotnet", "Itop.Templates.WebService.dll"]
+ENTRYPOINT ["dotnet", "Mercury.dll"]

@@ -1,4 +1,4 @@
-using Mercury.Exeptions;
+using Mercury.Models.Exceptions;
 using Newtonsoft.Json;
 
 namespace Mercury;
@@ -23,7 +23,6 @@ public class ResponseWrapperMiddleware
             return;
         }
 
-
         var originalBodyStream = context.Response.Body;
 
         using var responseBodyStream = new MemoryStream();
@@ -36,7 +35,11 @@ public class ResponseWrapperMiddleware
             if (IsErrorCode(context.Response.StatusCode))
             {
                 context.Response.Body = originalBodyStream;
-                var errorResponse = new { error = 1, Detail = GetErrorMessage(context.Response.StatusCode) };
+                var errorResponse = new
+                {
+                    error = 1,
+                    Detail = GetErrorMessage(context.Response.StatusCode)
+                };
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonConvert.SerializeObject(errorResponse));
                 return;
@@ -46,7 +49,11 @@ public class ResponseWrapperMiddleware
             responseBodyStream.Seek(0, SeekOrigin.Begin);
 
             var responseBody = await new StreamReader(responseBodyStream).ReadToEndAsync();
-            var wrappedResponse = new { error = 0, Detail = JsonConvert.DeserializeObject(responseBody) };
+            var wrappedResponse = new
+            {
+                error = 0,
+                Detail = JsonConvert.DeserializeObject(responseBody)
+            };
 
             //context.Response.StatusCode = 200;
             context.Response.ContentType = "application/json";
@@ -63,12 +70,11 @@ public class ResponseWrapperMiddleware
                 errorMessage = httpException.Message;
             }
 
-
             context.Response.StatusCode = statusCode;
             context.Response.Body = originalBodyStream;
             var errorResponse = new { error = 1, Detail = errorMessage };
             context.Response.ContentType = "application/json";
-            WebService.GetLogger()?.Error(JsonConvert.SerializeObject(errorResponse));
+            // WebService.GetLogger()?.Error(JsonConvert.SerializeObject(errorResponse));
             await context.Response.WriteAsync(JsonConvert.SerializeObject(errorResponse));
         }
     }
@@ -77,6 +83,7 @@ public class ResponseWrapperMiddleware
     {
         return code >= 400 && code <= 599;
     }
+
     private static string GetErrorMessage(int code)
     {
         return code switch
@@ -123,7 +130,6 @@ public class ResponseWrapperMiddleware
             _ => "Unknown Error",
         };
     }
-
 }
 
 [AttributeUsage(AttributeTargets.Method)]
