@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.EntityFrameworkCore;
 using NLog;
 using NLog.Web;
 
@@ -7,8 +6,6 @@ namespace Mercury;
 
 public class Program
 {
-    public static Logger? Logger;
-
     public static void Main()
     {
         var builder = WebApplication.CreateBuilder();
@@ -16,6 +13,12 @@ public class Program
         // Log System
         builder.Logging.ClearProviders();
         builder.Host.UseNLog();
+
+        LogService.Instance = LogManager
+            .Setup()
+            .LoadConfigurationFromAppSettings()
+            .GetCurrentClassLogger();
+        LogService.Get()?.Info("Log Init");
 
         // Swagger
         builder.Services.AddEndpointsApiExplorer();
