@@ -1,5 +1,4 @@
 using Mercury.Models.Db;
-using Mercury.Models.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Mercury.Module.Movies;
@@ -22,9 +21,10 @@ public class MoviesModule : BaseModuleHandler
             "/{id}",
             async (Guid id, MoviesService service) =>
             {
-                Movie? movie =
-                    await service.GetById(id)
-                    ?? throw new HttpException("Movie not found with that id", 404);
+                Movie? movie = await service.GetById(id);
+
+                if (movie == null)
+                    return Results.NotFound("There is no movie with that id");
 
                 return Results.Ok(movie);
             }
@@ -39,9 +39,12 @@ public class MoviesModule : BaseModuleHandler
                 string? err = resp.Item1;
                 Movie? movie = resp.Item2;
 
+                // XXX When using Problem and object its added to the detail of the global response.
+                // So if you want to access the message you have to go Detail.detail and that doesn't feel right.
+                // Use badRequest could be a solution but it also feels wrong because in this case is not a problem of a bad request its a internal error
                 if (!string.IsNullOrEmpty(err))
-                    throw new HttpException(err);
-                return movie;
+                    return Results.Problem(err);
+                return Results.Ok(movie);
             }
         );
 
@@ -55,8 +58,8 @@ public class MoviesModule : BaseModuleHandler
                 Movie? movie = resp.Item2;
 
                 if (!string.IsNullOrEmpty(err))
-                    throw new HttpException(err, 404);
-                return movie;
+                    return Results.NotFound(err);
+                return Results.Ok(movie);
             }
         );
 

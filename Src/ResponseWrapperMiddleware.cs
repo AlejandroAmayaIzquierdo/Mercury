@@ -3,14 +3,10 @@ using Newtonsoft.Json;
 
 namespace Mercury;
 
-public class ResponseWrapperMiddleware
+// TODO check the right way to make a global exception handler. I feel this is not a good solution
+public class ResponseWrapperMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public ResponseWrapperMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
+    private readonly RequestDelegate _next = next;
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -35,10 +31,16 @@ public class ResponseWrapperMiddleware
             if (IsErrorCode(context.Response.StatusCode))
             {
                 context.Response.Body = originalBodyStream;
+                responseBodyStream.Seek(0, SeekOrigin.Begin);
+
+                var errorMessage = await new StreamReader(responseBodyStream).ReadToEndAsync();
+
                 var errorResponse = new
                 {
                     error = 1,
-                    Detail = GetErrorMessage(context.Response.StatusCode)
+                    Detail = !string.IsNullOrEmpty(errorMessage)
+                        ? JsonConvert.DeserializeObject(errorMessage)
+                        : GetErrorMessage(context.Response.StatusCode)
                 };
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonConvert.SerializeObject(errorResponse));
@@ -92,7 +94,7 @@ public class ResponseWrapperMiddleware
             401 => "Unauthorized",
             402 => "Payment Required",
             403 => "Forbidden",
-            404 => "Route not found",
+            404 => "Not found",
             405 => "Method Not Allowed",
             406 => "Not Acceptable",
             407 => "Proxy Authentication Required",
