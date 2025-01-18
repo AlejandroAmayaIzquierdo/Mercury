@@ -1,4 +1,4 @@
-namespace Mercury.Module;
+namespace Mercury.Modules;
 
 public class AppModule : BaseModuleHandler
 {

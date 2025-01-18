@@ -1,6 +1,10 @@
+using System.Text;
 using Mercury.Db;
+using Mercury.Util;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
 
@@ -24,7 +28,44 @@ public class Program
 
         // Swagger
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc(
+                "v1",
+                new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Mercury API", Version = "v1" }
+            );
+
+            // Add JWT Authentication to Swagger
+            options.AddSecurityDefinition(
+                "Bearer",
+                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Description =
+                        "Enter 'your valid token in the text input below.\nExample: \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
+                }
+            );
+
+            options.AddSecurityRequirement(
+                new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                {
+                    {
+                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                        {
+                            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                            {
+                                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                }
+            );
+        });
 
         // Compression
         builder.Services.AddOutputCache();
@@ -70,6 +111,26 @@ public class Program
                 ?.Error("The connection string is not stablish. Any db Access will fail");
 
         builder.Services.AddRegisterRoutes();
+        builder.Services.AddScoped<JWTHandler>();
+
+        builder
+            .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["JWTSecurity:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["JWTSecurity:Audience"],
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["JWTSecurity:Token"]!)
+                    )
+                };
+            });
+        builder.Services.AddAuthorization();
 
         var app = builder.Build();
 
@@ -82,6 +143,8 @@ public class Program
         // Middlewares
         app.UseMiddleware<ResponseWrapperMiddleware>();
         app.UseRegisterRoutes();
+
+        app.UseAuthorization();
 
         app.UseOutputCache();
 

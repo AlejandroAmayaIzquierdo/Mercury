@@ -1,4 +1,4 @@
-namespace Mercury.Module.Dev;
+namespace Mercury.Modules.Dev;
 
 public class DevModule : BaseModuleHandler
 {

@@ -1,11 +1,13 @@
 using Mercury.Models.Db;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Mercury.Module.Movies;
+namespace Mercury.Modules.Movies;
 
 public class MoviesModule : BaseModuleHandler
 {
     protected override string MODULE => "/Movies";
+
+    protected override bool IS_AUTH_MODULE => true;
 
     public override void Register(ref RouteGroupBuilder module)
     {

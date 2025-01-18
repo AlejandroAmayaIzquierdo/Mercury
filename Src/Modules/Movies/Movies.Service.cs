@@ -2,7 +2,7 @@ using Mercury.Db;
 using Mercury.Models.Db;
 using Microsoft.EntityFrameworkCore;
 
-namespace Mercury.Module.Movies;
+namespace Mercury.Modules.Movies;
 
 public record InputCreateMovie(string Tittle, int? Genre = 1);
 

@@ -3,15 +3,31 @@ namespace Mercury;
 public abstract class BaseModuleHandler
 {
     protected abstract string MODULE { get; }
-
-    // TODO if this is true add .RequireAuthorization to the module.
-    // Maybe add some kind of role auth too.
-    // protected abstract bool IS_AUTH_MODULE { get; }
+    protected virtual bool IS_AUTH_MODULE { get; } = false;
+    protected virtual string AUTH_MODULE_ROLE { get; } = string.Empty;
 
     public void Invoke(ref WebApplication app)
     {
         var module = app.MapGroup(MODULE);
         module.WithTags(MODULE);
+
+        if (IS_AUTH_MODULE)
+        {
+            if (!string.IsNullOrWhiteSpace(AUTH_MODULE_ROLE))
+            {
+                // Require specific role
+                module.RequireAuthorization(options =>
+                {
+                    options.RequireRole(AUTH_MODULE_ROLE);
+                });
+            }
+            else
+            {
+                // General authorization with no specific role
+                module.RequireAuthorization();
+            }
+        }
+
         Register(ref module);
     }
 

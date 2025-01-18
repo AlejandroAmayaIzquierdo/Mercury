@@ -1,6 +1,6 @@
 using Mercury.Db;
 
-namespace Mercury.Module.Dev;
+namespace Mercury.Modules.Dev;
 
 public class DevService(MysqlContext dbContext)
 {
