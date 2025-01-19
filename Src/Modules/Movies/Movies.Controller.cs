@@ -9,6 +9,9 @@ public class MoviesModule : BaseModuleHandler
 
     protected override bool IS_AUTH_MODULE => true;
 
+    // TODO make it possible to have multiple roles on one module.
+    protected override string AUTH_MODULE_ROLE => "User";
+
     public override void Register(ref RouteGroupBuilder module)
     {
         module.MapGet(

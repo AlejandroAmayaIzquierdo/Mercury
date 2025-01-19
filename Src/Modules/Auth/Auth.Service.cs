@@ -32,7 +32,8 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
                 {
                     PasswordHash = hashedPassword,
                     Id = Guid.NewGuid(),
-                    UserName = userDto.UserName
+                    UserName = userDto.UserName,
+                    Role = "User",
                 };
 
             _dbContext.Users.Add(user);
@@ -58,7 +59,7 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
     public async Task<(string?, TokenResponseDto?)> LoginUserAsync(UserDto userDto)
     {
         User? user = await _dbContext.Users.FirstOrDefaultAsync(u =>
-            u.UserName == userDto.UserName
+            u.UserName.ToLower() == userDto.UserName.ToLower()
         );
 
         bool isCredentialsWrong = false;
@@ -72,16 +73,17 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
 
         string refreshToken = await GenerateAndSaveRefreshTokenAsync(user!);
 
-        return (
-            null,
-            await CreateTokenResponse(user!)
-        );
+        return (null, await CreateTokenResponse(user!));
     }
 
     public async Task<User?> ValidateRefreshTokenAsync(RefreshTokenRequestDto dto)
     {
         var user = await _dbContext.Users.FindAsync(dto.UserId);
-        if (user is null || user.RefreshToken != dto.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        if (
+            user is null
+            || user.RefreshToken != dto.RefreshToken
+            || user.RefreshTokenExpiryTime <= DateTime.UtcNow
+        )
             return null;
         return user;
     }
@@ -104,6 +106,4 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
         await _dbContext.SaveChangesAsync();
         return refreshToken;
     }
-
-
 }

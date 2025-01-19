@@ -41,14 +41,16 @@ public class AuthModule : BaseModuleHandler
             }
         );
 
-        module.MapPost("/refresh-token", async ([FromBody] RefreshTokenRequestDto request, AuthService service) =>
-        {
-            var user = await service.ValidateRefreshTokenAsync(request);
-            if (user is null)
-                return Results.Unauthorized();
-            return Results.Ok(await service.CreateTokenResponse(user));
-        });
-
+        module.MapPost(
+            "/refresh-token",
+            async ([FromBody] RefreshTokenRequestDto request, AuthService service) =>
+            {
+                var user = await service.ValidateRefreshTokenAsync(request);
+                if (user is null)
+                    return Results.Unauthorized();
+                return Results.Ok(await service.CreateTokenResponse(user));
+            }
+        );
 
         module
             .MapGet(
