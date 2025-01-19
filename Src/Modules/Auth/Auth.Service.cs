@@ -22,8 +22,8 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
             string pass = userDto.Password;
 
             // TODO add validations of password complexity
-            if (string.IsNullOrEmpty(pass) || pass.Length < 10)
-                return ("Invalid userName or Password", null);
+            if (string.IsNullOrEmpty(pass) || pass.Length < 8)
+                return ("The password length should be at least 8 characters", null);
 
             var hashedPassword = Argon2.Hash(userDto.Password);
 
@@ -74,11 +74,26 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
 
         return (
             null,
-            new() { AccessToken = _jwtHandler.CreateToken(user!), RefreshToken = refreshToken }
+            await CreateTokenResponse(user!)
         );
     }
 
-    public async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
+    public async Task<User?> ValidateRefreshTokenAsync(RefreshTokenRequestDto dto)
+    {
+        var user = await _dbContext.Users.FindAsync(dto.UserId);
+        if (user is null || user.RefreshToken != dto.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            return null;
+        return user;
+    }
+
+    public async Task<TokenResponseDto> CreateTokenResponse(User user)
+    {
+        string refreshToken = await GenerateAndSaveRefreshTokenAsync(user!);
+
+        return new() { AccessToken = _jwtHandler.CreateToken(user!), RefreshToken = refreshToken };
+    }
+
+    private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
     {
         var refreshToken = _jwtHandler.GenerateRefreshToken();
         user.RefreshToken = refreshToken;
@@ -89,4 +104,6 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
         await _dbContext.SaveChangesAsync();
         return refreshToken;
     }
+
+
 }
