@@ -55,7 +55,7 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
     /// - If validation fails: returns a tuple with an error message as the first element and null as the second element.
     /// - If validation succeeds: returns null as the first element and a success token as the second element.
     /// </returns>
-    public async Task<(string?, string?)> LoginUserAsync(UserDto userDto)
+    public async Task<(string?, TokenResponseDto?)> LoginUserAsync(UserDto userDto)
     {
         User? user = await _dbContext.Users.FirstOrDefaultAsync(u =>
             u.UserName == userDto.UserName
@@ -70,6 +70,23 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
         if (isCredentialsWrong)
             return ("The user or the password is wrong", null);
 
-        return (null, _jwtHandler.CreateToken(user!));
+        string refreshToken = await GenerateAndSaveRefreshTokenAsync(user!);
+
+        return (
+            null,
+            new() { AccessToken = _jwtHandler.CreateToken(user!), RefreshToken = refreshToken }
+        );
+    }
+
+    public async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
+    {
+        var refreshToken = _jwtHandler.GenerateRefreshToken();
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(1);
+
+        _dbContext.Users.Update(user);
+
+        await _dbContext.SaveChangesAsync();
+        return refreshToken;
     }
 }

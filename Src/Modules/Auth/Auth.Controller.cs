@@ -32,12 +32,12 @@ public class AuthModule : BaseModuleHandler
                 var resp = await service.LoginUserAsync(request);
 
                 string? err = resp.Item1;
-                string? token = resp.Item2;
+                TokenResponseDto? tokenResponse = resp.Item2;
 
                 if (err != null)
                     return Results.BadRequest(err);
 
-                return Results.Ok(token);
+                return Results.Ok(tokenResponse);
             }
         );
 

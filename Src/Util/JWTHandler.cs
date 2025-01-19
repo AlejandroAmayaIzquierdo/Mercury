@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Mercury.Models.Auth;
 using Microsoft.IdentityModel.Tokens;
@@ -29,10 +30,18 @@ public class JWTHandler(IConfiguration configuration)
             issuer: _configuration.GetValue<string>("JWTSecurity:Issuer"),
             audience: _configuration.GetValue<string>("JWTSecurity:Audience"),
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(1),
+            expires: DateTime.UtcNow.AddMinutes(10),
             signingCredentials: creds
         );
 
         return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+    }
+
+    public string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
     }
 }
