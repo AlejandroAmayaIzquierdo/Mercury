@@ -1,4 +1,4 @@
-using Mercury.Models.Exceptions;
+using Mercury.Models;
 using Newtonsoft.Json;
 
 namespace Mercury;
