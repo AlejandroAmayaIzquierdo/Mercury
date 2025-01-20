@@ -1,3 +1,5 @@
+using Mercury.Util;
+
 namespace Mercury.Modules.Dev;
 
 public class DevModule : BaseModuleHandler

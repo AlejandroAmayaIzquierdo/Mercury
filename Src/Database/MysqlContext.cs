@@ -1,5 +1,5 @@
 using Mercury.Models.Auth;
-using Mercury.Models.Db;
+using Mercury.Models.Movies;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mercury.Db;

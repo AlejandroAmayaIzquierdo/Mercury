@@ -1,6 +1,6 @@
 using NLog;
 
-namespace Mercury;
+namespace Mercury.Util;
 
 public class LogService
 {

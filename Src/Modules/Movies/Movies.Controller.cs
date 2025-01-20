@@ -1,4 +1,5 @@
-using Mercury.Models.Db;
+using Mercury.Models.Movies;
+using Mercury.Util;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Mercury.Modules.Movies;

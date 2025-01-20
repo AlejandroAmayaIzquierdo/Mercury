@@ -1,5 +1,5 @@
 using Mercury.Db;
-using Mercury.Models.Db;
+using Mercury.Models.Movies;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mercury.Modules.Movies;

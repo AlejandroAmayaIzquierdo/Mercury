@@ -1,4 +1,5 @@
 using Mercury.Models.Auth;
+using Mercury.Util;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Mercury.Modules.Auth;

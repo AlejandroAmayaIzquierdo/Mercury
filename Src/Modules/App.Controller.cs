@@ -1,3 +1,5 @@
+using Mercury.Util;
+
 namespace Mercury.Modules;
 
 public class AppModule : BaseModuleHandler

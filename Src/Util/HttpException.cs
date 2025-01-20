@@ -1,4 +1,4 @@
-namespace Mercury.Models;
+namespace Mercury.Util;
 
 public class HttpException(string message, int statusCode = 500) : Exception(message)
 {

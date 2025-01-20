@@ -1,4 +1,4 @@
-namespace Mercury;
+namespace Mercury.Util;
 
 public abstract class BaseModuleHandler
 {

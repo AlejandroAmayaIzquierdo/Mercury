@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Mercury.Models.Db;
+namespace Mercury.Models.Movies;
 
 public class Genre
 {
