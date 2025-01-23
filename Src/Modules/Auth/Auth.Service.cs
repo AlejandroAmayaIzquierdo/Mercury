@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.Tasks;
 using Isopoh.Cryptography.Argon2;
 using Mercury.Db;
 using Mercury.Models.Auth;
@@ -27,13 +28,15 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
 
             var hashedPassword = Argon2.Hash(userDto.Password);
 
+            var userId = Guid.NewGuid();
+
             User user =
                 new()
                 {
                     PasswordHash = hashedPassword,
-                    Id = Guid.NewGuid(),
+                    Id = userId,
                     UserName = userDto.UserName,
-                    Role = "User",
+                    UserRoles = [new UserRole() { UserId = userId, RoleId = 2 }] // XXX Hardcoded 'User' Role
                 };
 
             _dbContext.Users.Add(user);
@@ -58,9 +61,14 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
     /// </returns>
     public async Task<(string?, TokenResponseDto?)> LoginUserAsync(UserDto userDto)
     {
-        User? user = await _dbContext.Users.FirstOrDefaultAsync(u =>
-            u.UserName.ToLower() == userDto.UserName.ToLower()
-        );
+        var user = await _dbContext
+            .Users.Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .ThenInclude(rp => rp.RolePermissions)
+            .ThenInclude(p => p.Permission)
+            .FirstOrDefaultAsync(u =>
+                u.UserName.Equals(userDto.UserName, StringComparison.CurrentCultureIgnoreCase)
+            );
 
         bool isCredentialsWrong = false;
 
@@ -78,7 +86,12 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
 
     public async Task<User?> ValidateRefreshTokenAsync(RefreshTokenRequestDto dto)
     {
-        var user = await _dbContext.Users.FindAsync(dto.UserId);
+        var user = await _dbContext
+            .Users.Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .ThenInclude(rp => rp.RolePermissions)
+            .ThenInclude(p => p.Permission)
+            .FirstOrDefaultAsync(u => u.Id == dto.UserId);
         if (
             user is null
             || user.RefreshToken != dto.RefreshToken
@@ -105,5 +118,27 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
 
         await _dbContext.SaveChangesAsync();
         return refreshToken;
+    }
+
+    public async Task<User?> AssignRoleToUserAsync(Guid userID, params int[] rolesId)
+    {
+        User? user = await _dbContext
+            .Users.Include(u => u.UserRoles)
+            .FirstOrDefaultAsync(u => u.Id == userID);
+
+        if (user is null)
+            return null;
+
+        foreach (var roleId in rolesId)
+        {
+            if (user.UserRoles.Any(ur => ur.RoleId == roleId))
+                continue;
+
+            user.UserRoles.Add(new UserRole() { UserId = userID, RoleId = roleId });
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        return user;
     }
 }

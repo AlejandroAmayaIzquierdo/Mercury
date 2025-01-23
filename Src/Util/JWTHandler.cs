@@ -13,11 +13,20 @@ public class JWTHandler(IConfiguration configuration)
 
     public string CreateToken(User user)
     {
+        var permissions = user
+            .UserRoles.SelectMany(ur => ur.Role?.RolePermissions ?? [])
+            .Select(rp => rp.Permission.Id)
+            .Distinct()
+            .ToList();
+
+        LogService.Get()?.Info($"Permisions {string.Join(",", permissions)}");
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.UserName),
-            new(ClaimTypes.Role, user.Role)
+            new(ClaimTypes.Role, string.Join(",", user.UserRoles.Select(ur => ur.Role?.Name))),
+            new("permissions", string.Join(",", permissions))
         };
 
         var key = new SymmetricSecurityKey(

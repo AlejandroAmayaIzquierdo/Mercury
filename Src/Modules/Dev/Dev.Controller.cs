@@ -9,7 +9,7 @@ public class DevModule : BaseModuleHandler
     public override void Register(ref RouteGroupBuilder module)
     {
         module.MapGet(
-            "/MysqlConnection",
+            "/mysqlConnection",
             async (DevService service) =>
             {
                 bool isConnected = await service.TestMysqlConnection();

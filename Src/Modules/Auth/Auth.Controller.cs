@@ -11,7 +11,7 @@ public class AuthModule : BaseModuleHandler
     public override void Register(ref RouteGroupBuilder module)
     {
         module.MapPost(
-            "/Register",
+            "/register",
             async ([FromBody] UserDto request, AuthService service) =>
             {
                 var resp = await service.RegisterUserAsync(request);
@@ -52,25 +52,5 @@ public class AuthModule : BaseModuleHandler
                 return Results.Ok(await service.CreateTokenResponse(user));
             }
         );
-
-        module
-            .MapGet(
-                "/authEndpoint",
-                () =>
-                {
-                    return Results.Ok("😃");
-                }
-            )
-            .RequireAuthorization();
-
-        module
-            .MapGet(
-                "/authAdmin",
-                () =>
-                {
-                    return Results.Ok("😎");
-                }
-            )
-            .RequireAuthorization(options => options.RequireRole("Admin"));
     }
 }

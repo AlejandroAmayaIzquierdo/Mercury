@@ -10,31 +10,35 @@ public class MoviesModule : BaseModuleHandler
 
     protected override bool IS_AUTH_MODULE => true;
 
-    // TODO make it possible to have multiple roles on one module.
-    protected override string AUTH_MODULE_ROLE => "User";
+    protected override ICollection<PermissionsTypes> Permissions => [PermissionsTypes.AccessMovies];
 
     public override void Register(ref RouteGroupBuilder module)
     {
-        module.MapGet(
-            "/",
-            (MoviesService service) =>
-            {
-                var movies = service.GetAll();
-                return Results.Ok(movies);
-            }
-        );
-        module.MapGet(
-            "/{id}",
-            async (Guid id, MoviesService service) =>
-            {
-                Movie? movie = await service.GetById(id);
+        module
+            .MapGet(
+                "/",
+                (MoviesService service) =>
+                {
+                    var movies = service.GetAll();
+                    return Results.Ok(movies);
+                }
+            )
+            .RequireAuthorization(policy => policy.RequirePermissions(PermissionsTypes.ReadMovies));
 
-                if (movie == null)
-                    return Results.NotFound("There is no movie with that id");
+        module
+            .MapGet(
+                "/{id}",
+                async (Guid id, MoviesService service) =>
+                {
+                    Movie? movie = await service.GetById(id);
 
-                return Results.Ok(movie);
-            }
-        );
+                    if (movie == null)
+                        return Results.NotFound("There is no movie with that id");
+
+                    return Results.Ok(movie);
+                }
+            )
+            .RequireAuthorization(policy => policy.RequirePermissions(PermissionsTypes.ReadMovies));
 
         module.MapPost(
             "/",
