@@ -226,7 +226,14 @@ namespace Mercury.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<bool>("Active")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("JobType")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Name")
@@ -248,9 +255,11 @@ namespace Mercury.Migrations
                         new
                         {
                             Id = 1,
+                            Active = true,
                             Description = "",
+                            JobType = "Mercury.Jobs.LogBackgroundJob",
                             Name = "LogBackground",
-                            Schedule = "* * * * *"
+                            Schedule = "0 * * * * ?"
                         });
                 });
 

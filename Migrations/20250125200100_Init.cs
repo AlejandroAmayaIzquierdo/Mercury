@@ -53,8 +53,10 @@ namespace Mercury.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
                     Name = table.Column<string>(type: "longtext", nullable: false),
+                    JobType = table.Column<string>(type: "longtext", nullable: false),
                     Schedule = table.Column<string>(type: "longtext", nullable: false),
-                    Description = table.Column<string>(type: "longtext", nullable: true)
+                    Description = table.Column<string>(type: "longtext", nullable: true),
+                    Active = table.Column<bool>(type: "tinyint(1)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -101,8 +103,8 @@ namespace Mercury.Migrations
                     UserId = table.Column<Guid>(type: "char(36)", nullable: false),
                     RefreshToken = table.Column<string>(type: "longtext", nullable: true),
                     RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    DeviceId = table.Column<Guid>(type: "char(36)", nullable: true)
+                    DeviceId = table.Column<Guid>(type: "char(36)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -210,8 +212,8 @@ namespace Mercury.Migrations
 
             migrationBuilder.InsertData(
                 table: "Jobs",
-                columns: new[] { "Id", "Description", "Name", "Schedule" },
-                values: new object[] { 1, "", "LogBackground", "* * * * *" });
+                columns: new[] { "Id", "Active", "Description", "JobType", "Name", "Schedule" },
+                values: new object[] { 1, true, "", "Mercury.Jobs.LogBackgroundJob", "LogBackground", "0 * * * * ?" });
 
             migrationBuilder.InsertData(
                 table: "Permissions",

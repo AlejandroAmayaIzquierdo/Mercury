@@ -1,5 +1,6 @@
 using System.Text;
 using Mercury.Db;
+using Mercury.Jobs;
 using Mercury.Util;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -7,12 +8,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
+using Quartz;
 
 namespace Mercury;
 
 public class Program
 {
-    public static void Main()
+    public static async Task Main()
     {
         var builder = WebApplication.CreateBuilder();
 
@@ -111,6 +113,7 @@ public class Program
                 ?.Error("The connection string is not stablish. Any db Access will fail");
 
         builder.Services.AddRegisterRoutes();
+        builder.Services.AddTransient<JobManager>();
         builder.Services.AddScoped<JWTHandler>();
 
         builder
@@ -132,6 +135,12 @@ public class Program
             });
         builder.Services.AddAuthorization();
 
+        builder.Services.AddQuartz();
+        builder.Services.AddQuartzHostedService(options =>
+        {
+            options.WaitForJobsToComplete = true;
+        });
+
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
@@ -143,6 +152,12 @@ public class Program
         // Middlewares
         app.UseMiddleware<ResponseWrapperMiddleware>();
         app.UseRegisterRoutes();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var jobManager = scope.ServiceProvider.GetRequiredService<JobManager>();
+            await jobManager.RegisterJobsAsync();
+        }
 
         app.UseAuthorization();
 

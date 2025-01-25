@@ -66,7 +66,8 @@ public class MysqlContext(DbContextOptions options) : DbContext(options)
                 {
                     Id = 1,
                     Name = "LogBackground",
-                    Schedule = "* * * * *"
+                    Schedule = "0 * * * * ?",
+                    JobType = "Mercury.Jobs.LogBackgroundJob"
                 }
             );
 
