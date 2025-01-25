@@ -10,7 +10,4 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
 
     public virtual ICollection<UserRole> UserRoles { get; set; } = [];
-
-    public string? RefreshToken { get; set; }
-    public DateTime? RefreshTokenExpiryTime { get; set; }
 }

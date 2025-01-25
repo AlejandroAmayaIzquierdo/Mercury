@@ -28,7 +28,7 @@ public class AuthModule : BaseModuleHandler
 
         module.MapPost(
             "/login",
-            async ([FromBody] UserDto request, AuthService service) =>
+            async ([FromBody] UserDto request, AuthService service, HttpContext context) =>
             {
                 var resp = await service.LoginUserAsync(request);
 
@@ -46,10 +46,16 @@ public class AuthModule : BaseModuleHandler
             "/refresh-token",
             async ([FromBody] RefreshTokenRequestDto request, AuthService service) =>
             {
-                var user = await service.ValidateRefreshTokenAsync(request);
+                var user = await service.GetUserByIdAsync(request.UserId);
+                var isTokenValid = await service.ValidateRefreshTokenAsync(request);
+
                 if (user is null)
                     return Results.Unauthorized();
-                return Results.Ok(await service.CreateTokenResponse(user));
+
+                if (!isTokenValid)
+                    return Results.Unauthorized();
+
+                return Results.Ok(await service.GenerateSessionAndSaveRefreshTokenAsync(user));
             }
         );
     }

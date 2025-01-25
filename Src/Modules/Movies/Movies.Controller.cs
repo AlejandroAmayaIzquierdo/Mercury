@@ -23,7 +23,12 @@ public class MoviesModule : BaseModuleHandler
                     return Results.Ok(movies);
                 }
             )
-            .RequireAuthorization(policy => policy.RequirePermissions(PermissionsTypes.ReadMovies));
+            .RequireAuthorization(policy =>
+                policy.RequirePermissions(
+                    PermissionsTypes.AccessMovies,
+                    PermissionsTypes.ReadMovies
+                )
+            );
 
         module
             .MapGet(
