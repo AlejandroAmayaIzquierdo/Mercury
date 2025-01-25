@@ -4,6 +4,7 @@ using Mercury.Db;
 using Mercury.Models.Auth;
 using Mercury.Util;
 using Microsoft.EntityFrameworkCore;
+using UAParser;
 
 namespace Mercury.Modules.Auth;
 
@@ -58,7 +59,10 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
     /// - If validation fails: returns a tuple with an error message as the first element and null as the second element.
     /// - If validation succeeds: returns null as the first element and a success token as the second element.
     /// </returns>
-    public async Task<(string?, TokenResponseDto?)> LoginUserAsync(UserDto userDto)
+    public async Task<(string?, TokenResponseDto?)> LoginUserAsync(
+        UserDto userDto,
+        Models.Auth.Device device
+    )
     {
         var user = await _dbContext
             .Users.Include(u => u.UserRoles)
@@ -78,7 +82,7 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
         if (isCredentialsWrong)
             return ("The user or the password is wrong", null);
 
-        TokenResponseDto response = await GenerateSessionAndSaveRefreshTokenAsync(user!);
+        TokenResponseDto response = await GenerateSessionAndSaveRefreshTokenAsync(user!, device);
 
         return (null, response);
     }
@@ -99,25 +103,29 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
         return true;
     }
 
-    public async Task<TokenResponseDto> GenerateSessionAndSaveRefreshTokenAsync(User user)
+    public async Task<TokenResponseDto> GenerateSessionAndSaveRefreshTokenAsync(
+        User user,
+        Models.Auth.Device? device = null,
+        string? ExpiredAccessToken = null
+    )
     {
-        string accessToken = _jwtHandler.CreateToken(user!);
+        string newAccessToken = _jwtHandler.CreateToken(user!);
 
         var refreshToken = _jwtHandler.GenerateRefreshToken();
-        Session? session;
 
-        session = await _dbContext.Sessions.FirstOrDefaultAsync(s =>
-            s.UserId == user.Id && s.AccessToken == accessToken
+        Session? session = await _dbContext.Sessions.FirstOrDefaultAsync(s =>
+            s.UserId == user.Id && s.AccessToken == ExpiredAccessToken
         );
         if (session == null)
         {
             session = new Session()
             {
                 Id = Guid.NewGuid(),
-                AccessToken = accessToken,
+                AccessToken = newAccessToken,
                 UserId = user.Id,
                 RefreshToken = refreshToken,
-                RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(1)
+                RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(1),
+                DeviceId = device?.DeviceId
             };
             _dbContext.Sessions.Add(session);
         }
@@ -130,7 +138,74 @@ public class AuthService(MysqlContext dbContext, JWTHandler jwtHandler)
         }
 
         await _dbContext.SaveChangesAsync();
-        return new() { AccessToken = accessToken, RefreshToken = refreshToken };
+        return new() { AccessToken = newAccessToken, RefreshToken = refreshToken };
+    }
+
+    public async Task<Models.Auth.Device?> RegisterDevice(RegisterDeviceDto dto)
+    {
+        try
+        {
+            var parser = Parser.GetDefault();
+            var clientInfo = parser.Parse(dto.UserAgent);
+
+            var deviceName = $"{clientInfo.OS} - {clientInfo.Device.Family}";
+
+            var device = new Models.Auth.Device()
+            {
+                DeviceId = Guid.NewGuid(),
+                UserAgent = dto.UserAgent,
+                DeviceName = deviceName,
+                IPAddress = dto.IpAddress,
+            };
+
+            _dbContext.Devices.Add(device);
+
+            await _dbContext.SaveChangesAsync();
+
+            return device;
+        }
+        catch (Exception ex)
+        {
+            LogService.Get()?.Error(ex.Message);
+            return null;
+        }
+    }
+
+    public Models.Auth.Device BuildDevice(RegisterDeviceDto dto)
+    {
+        var parser = Parser.GetDefault();
+        var clientInfo = parser.Parse(dto.UserAgent);
+
+        var deviceName = $"{clientInfo.OS} - {clientInfo.Device.Family}";
+
+        var device = new Models.Auth.Device()
+        {
+            UserAgent = dto.UserAgent,
+            DeviceName = deviceName,
+            IPAddress = dto.IpAddress,
+        };
+        return device;
+    }
+
+    public async Task<bool> ValidateDevice(Models.Auth.Device deviceRequest, string accessToken)
+    {
+        var session = await _dbContext
+            .Sessions.Include(s => s.Device)
+            .FirstOrDefaultAsync(s => s.AccessToken == accessToken);
+        if (session is null)
+            return false;
+
+        var device = session.Device;
+
+        if (device is null)
+            return false;
+
+        if (
+            device.UserAgent != deviceRequest.UserAgent
+            || device.IPAddress != deviceRequest.IPAddress
+        )
+            return false;
+        return true;
     }
 
     public async Task<User?> GetUserByIdAsync(Guid id)

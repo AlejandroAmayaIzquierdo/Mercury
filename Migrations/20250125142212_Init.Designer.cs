@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mercury.Migrations
 {
     [DbContext(typeof(MysqlContext))]
-    [Migration("20250125125757_Init")]
+    [Migration("20250125142212_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -21,6 +21,26 @@ namespace Mercury.Migrations
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
+
+            modelBuilder.Entity("Mercury.Models.Auth.Device", b =>
+                {
+                    b.Property<Guid>("DeviceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("DeviceName")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("IPAddress")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("DeviceId");
+
+                    b.ToTable("Devices");
+                });
 
             modelBuilder.Entity("Mercury.Models.Auth.Permission", b =>
                 {
@@ -138,6 +158,12 @@ namespace Mercury.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("DeviceId")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("RefreshToken")
                         .HasColumnType("longtext");
 
@@ -148,6 +174,8 @@ namespace Mercury.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
 
                     b.ToTable("Sessions");
                 });
@@ -287,6 +315,15 @@ namespace Mercury.Migrations
                     b.Navigation("Permission");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Mercury.Models.Auth.Session", b =>
+                {
+                    b.HasOne("Mercury.Models.Auth.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId");
+
+                    b.Navigation("Device");
                 });
 
             modelBuilder.Entity("Mercury.Models.Auth.UserRole", b =>

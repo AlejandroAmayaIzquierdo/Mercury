@@ -11,9 +11,10 @@ public class Session
     public required Guid UserId { get; init; }
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiryTime { get; set; }
+    public Guid? DeviceId { get; init; }
 
-    // public string DeviceId { get; init; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // [JsonIgnore]
-    // public virtual Device? Device { get; set; }
+    [JsonIgnore]
+    public virtual Device? Device { get; set; }
 }
