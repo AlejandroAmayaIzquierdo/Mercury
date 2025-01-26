@@ -1,3 +1,4 @@
+using System.Transactions;
 using Mercury.Models.Auth;
 using Mercury.Models.Jobs;
 using Mercury.Models.Movies;
@@ -14,6 +15,7 @@ public class MysqlContext(DbContextOptions options) : DbContext(options)
 
     public DbSet<Device> Devices { get; set; }
 
+    // Roles
     public DbSet<Role> Roles { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
@@ -57,6 +59,17 @@ public class MysqlContext(DbContextOptions options) : DbContext(options)
                 new Permission { Id = (int)PermissionsTypes.CreateMovies, Name = "CreateMovies" },
                 new Permission { Id = (int)PermissionsTypes.UpdateMovies, Name = "UpdateMovies" },
                 new Permission { Id = (int)PermissionsTypes.DeleteMovies, Name = "DeleteMovies" }
+            );
+
+        modelBuilder
+            .Entity<RolePermission>()
+            .HasData(
+                new RolePermission()
+                {
+                    PermissionId = (int)PermissionsTypes.AccessMovies,
+                    RoleId = 1
+                },
+                new RolePermission() { PermissionId = (int)PermissionsTypes.ReadMovies, RoleId = 1 }
             );
 
         modelBuilder
