@@ -6,10 +6,6 @@ namespace Mercury.Modules.Movies;
 
 public class MoviesModule : BaseModuleHandler
 {
-    protected override string MODULE => "/Movies";
-
-    protected override bool IS_AUTH_MODULE => true;
-
     protected override ICollection<PermissionsTypes> Permissions => [PermissionsTypes.AccessMovies];
 
     public override void Register(ref RouteGroupBuilder module)

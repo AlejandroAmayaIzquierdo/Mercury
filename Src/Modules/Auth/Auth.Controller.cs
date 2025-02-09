@@ -7,8 +7,6 @@ namespace Mercury.Modules.Auth;
 
 public class AuthModule : BaseModuleHandler
 {
-    protected override string MODULE => "/Auth";
-
     public override void Register(ref RouteGroupBuilder module)
     {
         module.MapPost(

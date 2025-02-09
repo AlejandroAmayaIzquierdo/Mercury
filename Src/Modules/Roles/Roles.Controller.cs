@@ -12,7 +12,7 @@ public class RoleModule : BaseModuleHandler
             "/",
             () =>
             {
-                return Results.Ok();
+                return Results.Ok("😎👍");
             }
         );
     }

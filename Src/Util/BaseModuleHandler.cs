@@ -2,16 +2,15 @@ namespace Mercury.Util;
 
 public abstract class BaseModuleHandler
 {
-    protected abstract string MODULE { get; }
-    protected virtual bool IS_AUTH_MODULE { get; } = false;
+    protected virtual string MODULE => $"/{GetType().Name.Replace("Module", "")}";
     protected virtual ICollection<PermissionsTypes> Permissions { get; } = [];
 
     public void Invoke(ref WebApplication app)
     {
         var module = app.MapGroup(MODULE);
-        module.WithTags(MODULE);
+        module.WithTags(MODULE.TrimStart('/'));
 
-        if (IS_AUTH_MODULE || Permissions.Count > 0)
+        if (Permissions.Count > 0)
         {
             if (Permissions.Count > 0)
             {

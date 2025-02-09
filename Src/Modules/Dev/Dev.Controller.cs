@@ -4,8 +4,6 @@ namespace Mercury.Modules.Dev;
 
 public class DevModule : BaseModuleHandler
 {
-    protected override string MODULE => "/Dev";
-
     public override void Register(ref RouteGroupBuilder module)
     {
         module.MapGet(
