@@ -14,42 +14,51 @@ public class JobManager(MysqlContext dbContext, ISchedulerFactory schedulerFacto
     {
         LogService.Get()?.Info("Registering Jobs from database");
 
-        var scheduler = await _schedulerFactory.GetScheduler();
-
-        var jobs = GetActiveJobs();
-
-        foreach (var job in jobs)
+        try
         {
-            string jobKey = job.Name;
+            var scheduler = await _schedulerFactory.GetScheduler();
 
-            if (await scheduler.CheckExists(new JobKey(jobKey)))
+            var jobs = GetActiveJobs();
+
+            foreach (var job in jobs)
             {
-                LogService.Get()?.Info($"Job with name {jobKey} already exist");
-                continue;
+                string jobKey = job.Name;
+
+                if (await scheduler.CheckExists(new JobKey(jobKey)))
+                {
+                    LogService.Get()?.Info($"Job with name {jobKey} already exist");
+                    continue;
+                }
+
+                try
+                {
+                    var quartzJob = JobBuilder
+                        .Create(Type.GetType(job.JobType)!)
+                        .WithIdentity(jobKey)
+                        .Build();
+
+                    var jobTrigger = TriggerBuilder
+                        .Create()
+                        .ForJob(quartzJob)
+                        .WithIdentity($"{jobKey}-trigger")
+                        .WithCronSchedule(job.Schedule.Trim())
+                        .Build();
+
+                    await scheduler.ScheduleJob(quartzJob, jobTrigger);
+
+                    LogService.Get()?.Info($"Registered job '{jobKey} with cron '{job.Schedule}'");
+                }
+                catch (Exception ex)
+                {
+                    LogService
+                        .Get()
+                        ?.Error($"Error registering job with key '{jobKey}': {ex.Message}");
+                }
             }
-
-            try
-            {
-                var quartzJob = JobBuilder
-                    .Create(Type.GetType(job.JobType)!)
-                    .WithIdentity(jobKey)
-                    .Build();
-
-                var jobTrigger = TriggerBuilder
-                    .Create()
-                    .ForJob(quartzJob)
-                    .WithIdentity($"{jobKey}-trigger")
-                    .WithCronSchedule(job.Schedule.Trim())
-                    .Build();
-
-                await scheduler.ScheduleJob(quartzJob, jobTrigger);
-
-                LogService.Get()?.Info($"Registered job '{jobKey} with cron '{job.Schedule}'");
-            }
-            catch (Exception ex)
-            {
-                LogService.Get()?.Error($"Error registering job with key '{jobKey}': {ex.Message}");
-            }
+        }
+        catch (Exception ex)
+        {
+            LogService.Get()?.Error($"Error registering while registering jobs: {ex.Message}");
         }
     }
 
